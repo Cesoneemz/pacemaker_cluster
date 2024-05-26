@@ -1,0 +1,98 @@
+- name: Corosync keys generate
+  hosts: lb1
+  tasks:
+
+    - name: Generate corosync authkey
+      ansible.builtin.shell: |
+        corosync-keygen -l
+      args:
+        creates: /etc/corosync/authkey
+
+    - name: Fetch corosync authkey
+      ansible.builtin.fetch:
+        src: /etc/corosync/authkey
+        dest: /tmp/authkey
+        flat: yes
+
+    - name: Distribute corosync authkey to other nodes
+      ansible.builtin.copy:
+        src: /tmp/authkey
+        dest: /etc/corosync/authkey
+        mode: '0600'
+      delegate_to: "{{ item }}"
+      with_items:
+        - lb2
+
+- name: Enable services
+  hosts: load_balancers
+  tasks:
+
+  # - name: Enable pacemaker
+  #   shell: |
+  #     systemctl start pacemaker
+
+  - name: Destroy all existing clusters
+    shell: |
+      pcs cluster destroy
+
+  - name: Enable pcsd
+    shell: |
+      systemctl start pcsd
+      
+  - name: Enable pcsd-ruby
+    shell: |
+      systemctl start pcsd-ruby
+
+  - name: Enable nginx
+    shell: |
+      systemctl start nginx
+
+
+- name: Setup clusters
+  hosts: lb1
+  tasks:
+    - name: PCS auth
+      shell: |
+        pcs host auth lb1 lb2 -u hacluster -p 123
+    
+    - name: PCS cluster setup
+      shell: |
+        pcs cluster setup cluster_lb lb1 lb2 --force
+
+
+- name: Setup and start cluster
+  hosts: lb1
+  tasks:
+
+    - name: PCS cluster auth
+      shell: |
+        pcs cluster auth
+
+    - name: PCS cluster start
+      shell: |
+        pcs cluster start --all
+
+    - name: STONITH disable
+      shell: |
+        pcs property set stonith-enabled=false
+
+    - name: Add VIP resource
+      shell: |
+        pcs resource create vip IPaddr2 ip=10.0.0.100 cidr_netmask=24 nic=eth0 op monitor interval=30s
+      register: vip
+    - debug:
+        var: vip
+
+    - name: Add nginx resource
+      shell: |
+        pcs resource create nginx systemd:nginx op monitor interval=30s
+      register: nginx
+    - debug:
+        var: nginx
+
+    - name: PCS cluster check
+      shell: |
+        pcs status
+      register: pcs_status
+    - debug:
+        var: pcs_status

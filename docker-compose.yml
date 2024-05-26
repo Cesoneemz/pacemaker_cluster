@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+
+  lb1:
+    build: lb1/
+    container_name: lb1
+    networks:
+      - cluster
+    ports:
+      - "80:80"
+    privileged: true
+
+  lb2:
+    build: lb2/
+    container_name: lb2
+    networks:
+      - cluster
+    privileged: true
+    depends_on:
+      - lb1
+
+  host:
+    build: host/
+    container_name: host
+    networks:
+      - cluster
+    depends_on:
+      - lb1
+      - lb2
+    privileged: true
+    volumes:
+      - ./host/ansible:/ansible
+
+networks:
+  cluster:
+    driver: bridge
