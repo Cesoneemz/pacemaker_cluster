@@ -7,9 +7,9 @@ services:
     container_name: lb1
     networks:
       - cluster
-    ports:
-      - "80:80"
     privileged: true
+    ports:
+      - "8081:80"
 
   lb2:
     build: lb2/
@@ -19,6 +19,26 @@ services:
     privileged: true
     depends_on:
       - lb1
+    ports:
+      - "8082:80"
+
+  backend1:
+    build: backend1/
+    container_name: backend1
+    networks:
+      - cluster
+    depends_on:
+      - lb1
+      - lb2
+
+  backend2:
+    build: backend2/
+    container_name: backend2
+    networks:
+      - cluster
+    depends_on:
+      - lb1
+      - lb2  
 
   host:
     build: host/
@@ -28,6 +48,8 @@ services:
     depends_on:
       - lb1
       - lb2
+      - backend1
+      - backend2
     privileged: true
     volumes:
       - ./host/ansible:/ansible

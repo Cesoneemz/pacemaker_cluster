@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN mkdir -p /var/run/sshd
 
+
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin without-password/' /etc/ssh/sshd_config
 
 RUN sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd

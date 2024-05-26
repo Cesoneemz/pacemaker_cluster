@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     iproute2 \
     netmask \
     nginx \
+    keepalived \
     && apt-get clean
 
 RUN mkdir -p /var/run/sshd
