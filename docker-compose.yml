@@ -6,7 +6,8 @@ services:
     build: lb1/
     container_name: lb1
     networks:
-      - cluster
+      cluster:
+        ipv4_address: 10.0.0.101
     privileged: true
     ports:
       - "8081:80"
@@ -26,7 +27,8 @@ services:
     build: backend1/
     container_name: backend1
     networks:
-      - cluster
+      cluster:
+        ipv4_address: 10.0.0.101
     depends_on:
       - lb1
       - lb2
@@ -56,4 +58,10 @@ services:
 
 networks:
   cluster:
-    driver: bridge
+    driver: macvlan
+    driver_opts:
+        parent: en0
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
+          gateway: 10.0.0.1
