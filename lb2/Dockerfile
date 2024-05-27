@@ -9,18 +9,16 @@ RUN apt-get update && apt-get install -y \
     pcs \
     corosync \
     pacemaker \
-    crmsh \
     python3-pip \
-    iproute2 \
-    netmask \
     nginx \
     && apt-get clean
 
-RUN mkdir -p /var/run/sshd
+RUN mkdir -p /var/run/sshd && chmod 700 /root/.ssh
 
-RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin without-password/' /etc/ssh/sshd_config
-
-RUN sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
 RUN pcs cluster destroy
 
@@ -29,11 +27,10 @@ RUN chmod 600 /root/.ssh/id_rsa
 
 RUN cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
 COPY nginx.conf /etc/nginx/nginx.conf
 
 RUN echo "hacluster:123" | chpasswd
+
+EXPOSE 22
 
 CMD ["/lib/systemd/systemd"]
