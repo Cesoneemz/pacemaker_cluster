@@ -5,21 +5,21 @@ RUN apt-get update && apt-get install -y \
     openssh-server \
     sshpass \
     python3-pip \
-    iproute2 \
-    netmask \
-    nginx \
-    keepalived \
+    nginx \ 
     && apt-get clean
 
 RUN mkdir -p /var/run/sshd
 
-RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin without-password/' /etc/ssh/sshd_config
-
-RUN sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 COPY ssh/* /root/.ssh/
+
+EXPOSE 22
 
 CMD ["/entrypoint.sh"]

@@ -6,47 +6,49 @@ services:
     build: lb1/
     container_name: lb1
     networks:
-      cluster:
-        ipv4_address: 10.0.0.101
+      - cluster
     privileged: true
     ports:
       - "8081:80"
+    environment:
+      - NODE=lb1
+      - VIRTUAL_HOST=10.0.0.100
 
   lb2:
     build: lb2/
     container_name: lb2
     networks:
       - cluster
-    privileged: true
-    depends_on:
-      - lb1
+    privileged: true 
     ports:
       - "8082:80"
+    environment:
+      - NODE=lb2
+      - VIRTUAL_HOST=10.0.0.100
 
   backend1:
     build: backend1/
     container_name: backend1
     networks:
       cluster:
-        ipv4_address: 10.0.0.101
-    depends_on:
-      - lb1
-      - lb2
+        aliases:
+          - backend1
 
   backend2:
     build: backend2/
     container_name: backend2
     networks:
-      - cluster
-    depends_on:
-      - lb1
-      - lb2  
+      cluster:
+        aliases:
+          - backend2
 
   host:
     build: host/
     container_name: host
     networks:
-      - cluster
+      cluster:
+        aliases:
+          - ansible
     depends_on:
       - lb1
       - lb2
@@ -55,13 +57,11 @@ services:
     privileged: true
     volumes:
       - ./host/ansible:/ansible
+      
 
 networks:
   cluster:
-    driver: macvlan
-    driver_opts:
-        parent: en0
+    driver: bridge
     ipam:
       config:
         - subnet: 10.0.0.0/24
-          gateway: 10.0.0.1

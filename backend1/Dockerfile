@@ -18,5 +18,4 @@ RUN cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
 COPY index.html /var/www/html/index.html
 
-    
 CMD ["sh", "-c", "service ssh start && apache2ctl -D FOREGROUND"]
