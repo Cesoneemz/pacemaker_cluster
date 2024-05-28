@@ -29,6 +29,7 @@ services:
   backend1:
     build: backend1/
     container_name: backend1
+    privileged: true
     networks:
       cluster:
         aliases:
@@ -37,14 +38,15 @@ services:
   backend2:
     build: backend2/
     container_name: backend2
+    privileged: true
     networks:
       cluster:
         aliases:
           - backend2
 
   host:
-    build: host/
-    container_name: host
+    build: ansible/
+    container_name: ansible
     networks:
       cluster:
         aliases:
@@ -56,7 +58,7 @@ services:
       - backend2
     privileged: true
     volumes:
-      - ./host/ansible:/ansible
+      - ./ansible/ansible:/ansible
       
 
 networks:
