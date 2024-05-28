@@ -1,14 +1,16 @@
 FROM debian:latest
 
 RUN apt-get update && apt-get install -y \
-    apache2 \
     openssh-server \
+    python3-pip \
     && apt-get clean
 
 RUN mkdir /var/run/sshd
-RUN echo "Listen 8080" > /etc/apache2/ports.conf
-RUN echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf
-RUN ln -s /etc/apache2/conf-available/servername.conf /etc/apache2/conf-enabled/servername.conf
+
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
     
     # Добавление публичного ключа в authorized_keys
 COPY ssh/* /root/.ssh/
@@ -18,5 +20,6 @@ RUN cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
 COPY index.html /var/www/html/index.html
 
-    
-CMD ["sh", "-c", "service ssh start && apache2ctl -D FOREGROUND"]
+EXPOSE 22
+
+CMD ["sh", "-c", "service ssh start && tail -f /dev/null"]

@@ -3,9 +3,7 @@ FROM debian:latest
 RUN apt-get update && apt-get install -y \
     ansible \
     openssh-server \
-    sshpass \
     python3-pip \
-    nginx \ 
     && apt-get clean
 
 RUN mkdir -p /var/run/sshd
